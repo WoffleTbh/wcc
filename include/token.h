@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stdlib.h>
 
 #define WCC_TOKEN_LIST_INITIAL_CAPACITY 32
 
@@ -25,7 +25,10 @@ typedef enum {
     WCC_TOKEN_NOT,
     WCC_TOKEN_SHL,
     WCC_TOKEN_SHR,
-    WCC_TOKEN_SAR,
+    WCC_TOKEN_BIT_AND,
+    WCC_TOKEN_BIT_OR,
+    WCC_TOKEN_BIT_XOR,
+    WCC_TOKEN_BIT_NOT,
 
     /* Comparison */
     WCC_TOKEN_EQ,
@@ -47,13 +50,10 @@ typedef enum {
     WCC_TOKEN_XOR_ASSIGN,
     WCC_TOKEN_SHL_ASSIGN,
     WCC_TOKEN_SHR_ASSIGN,
-    WCC_TOKEN_SAR_ASSIGN,
 
     /* Increment/Decrement */
-    WCC_TOKEN_POST_INC,
-    WCC_TOKEN_POST_DEC,
-    WCC_TOKEN_PRE_INC,
-    WCC_TOKEN_PRE_DEC,
+    WCC_TOKEN_INC,
+    WCC_TOKEN_DEC,
 
     /* Values */
     WCC_TOKEN_INT,
@@ -82,6 +82,7 @@ typedef enum {
     WCC_TOKEN_DOT,
 
     /* Misc */
+    WCC_TOKEN_QUESTION,
     WCC_TOKEN_EOF,
 } wccTokenType;
 
@@ -99,10 +100,11 @@ typedef struct {
     size_t capacity;
 } wccTokenList;
 
-inline wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len);
-inline void wccToken_free(wccToken* token);
+wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len);
+void wccToken_free(wccToken* token);
 
-inline wccTokenList* wccTokenList_create();
-inline void wccTokenList_destroy(wccTokenList* list);
+wccTokenList* wccTokenList_new();
+void wccTokenList_free(wccTokenList* list);
 void wccTokenList_push(wccTokenList* list, wccToken* token);
 
+char* wccTokenNameFromType(wccTokenType type);

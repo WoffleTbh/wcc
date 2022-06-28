@@ -72,11 +72,17 @@ class CompilationHelper:
         files = os.listdir(directory)
         self.command(f"{self.cc} {' '.join(self.cflags)} -o {BIN_DIR}/{self.target}/wcc {' '.join(directory + '/' + file for file in files)}")
 
+    def compile_dir(self, directory):
+        for file in os.listdir(directory):
+            if file.endswith(".c"):
+                self.compile_file(f"{directory}/{file}")
+            elif os.path.isdir(f"{directory}/{file}"):
+                self.compile_dir(f"{directory}/{file}")
+
     def compile_all(self):
         self.ensure_dirs()
         self.resolve_environ()
-        for file in os.listdir(SRC_DIR):
-            self.compile_file(f"{SRC_DIR}/{file}")
+        self.compile_dir(SRC_DIR)
         self.link_files(BUILD_DIR)
 
 if __name__ == "__main__":

@@ -4,8 +4,8 @@
  * See README.md for more info about the project
  * */
 
-#pragma once
+// main compile func
+void wcc_compile_x86(char* src);
 
-#include "token.h"
+// TODO: per-node funcs
 
-wccTokenList* wccTokenize(char* src);

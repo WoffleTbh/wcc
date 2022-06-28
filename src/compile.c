@@ -8,9 +8,13 @@
 #include <stdlib.h>
 #include "wcc/wcc.h"
 #include "wcc/term.h"
+#include "compilers/x86.h"
+#include "lexer.h"
+#include "token.h"
+
 
 char* __compile_x86(char* src) {
-
+    wcc_compile_x86(src);
 }
 
 char* __compile_x64(char* src) {
@@ -18,6 +22,5 @@ char* __compile_x64(char* src) {
 }
 
 char* __compile_arm(char* src) {
-    fprintf(stderr, "%sfatal:%s arm not yet supported\n", wcc_red, wcc_style_reset);
-    exit(1);
+    wcc_fatal("arm compiler not implemented");
 }
