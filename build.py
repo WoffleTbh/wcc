@@ -24,6 +24,9 @@ class CompilationHelper:
         self.target = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] in ("debug", "release") else "release"
         if self.target == "debug":
             self.cflags += ["-fsanitize=address,undefined", "-Wall", "-Werror", "-Wextra", "-g3", "-ggdb", "-O0"]
+        if len(sys.argv) > 1 and sys.argv[1] == "clean":
+            self.command(f"rm -rf {BUILD_DIR} {BIN_DIR}")
+            exit(0)
 
     def info(self, text):
         print(f"({time.strftime('%X')})   {colorama.Fore.CYAN}[INFO] {text}{colorama.Style.RESET_ALL}")

@@ -92,6 +92,7 @@ typedef struct {
     size_t line;
     size_t col;
     size_t len;
+    size_t idx;
 } wccToken;
 
 typedef struct {
@@ -100,7 +101,7 @@ typedef struct {
     size_t capacity;
 } wccTokenList;
 
-wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len);
+wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len, size_t idx);
 void wccToken_free(wccToken* token);
 
 wccTokenList* wccTokenList_new();

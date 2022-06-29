@@ -5,6 +5,7 @@
  * */
 
 #include <stdlib.h>
+#include <string.h>
 #include "wcc/error.h"
 #include "token.h"
 
@@ -13,16 +14,16 @@ char* WCC_C_KEYWORDS[] = {
     "__attribute__", "__asm", "__asm__"
 };
 
-wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len) {
+wccToken* wccToken_new(wccTokenType type, char* str, size_t line, size_t col, size_t len, size_t idx) {
     wccToken* token = malloc(sizeof(wccToken));
     token->type = type;
     token->str = str;
     token->line = line;
     token->col = col;
     token->len = len;
-
+    token->idx = idx;
     if (str != NULL) {
-        for (int i = 0; i < sizeof(WCC_C_KEYWORDS) / sizeof(char*); i++) {
+        for (size_t i = 0; i < sizeof(WCC_C_KEYWORDS) / sizeof(char*); i++) {
             if (strcmp(WCC_C_KEYWORDS[i], str) == 0) {
                 token->type = WCC_TOKEN_KEYWORD;
                 break;
@@ -171,6 +172,8 @@ char* wccTokenNameFromType(wccTokenType type) {
             return "question";
         case WCC_TOKEN_EOF:
             return "eof";
+        default:
+            return "unhandled";
     }
     return "unknown";
 }

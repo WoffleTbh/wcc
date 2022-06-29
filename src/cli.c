@@ -56,10 +56,10 @@ void compile_file(char* file) {
         }
     } while (c != EOF);
     fclose(source);
-    
+
     source_buffer[source_buffer_len] = 0;
 
-    wcc_compile(source_buffer);
+    wcc_compile(source_buffer, file);
 }
 int main(int argc, char** argv) {
     parse_args(argc, argv);

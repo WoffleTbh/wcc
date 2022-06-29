@@ -5,10 +5,11 @@
  * */
 
 #include <stdlib.h>
+#include "wcc/error.h"
 #include "token.h"
 #include "lexer.h"
 
-wccTokenList* wccTokenize(char* src) {
+wccTokenList* wccTokenize(char* src, char* file) {
     size_t idx = 0;
     size_t line = 1;
     size_t col = 1;
@@ -22,38 +23,39 @@ wccTokenList* wccTokenize(char* src) {
                 break;
             case '\n':
                 idx++;
+                col = 1;
                 line++;
                 break;
             case '+':
                 if (src[idx + 1] == '+') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_INC, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_INC, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ADD_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ADD_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ADD, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ADD, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '-':
                 if (src[idx + 1] == '-') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DEC, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DEC, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '*':
                 if (src[idx + 1] == '*') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MUL_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MUL_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MUL, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MUL, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
@@ -70,142 +72,195 @@ wccTokenList* wccTokenize(char* src) {
                     }
                     idx += 2;
                 } else if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DIV_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DIV_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DIV, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_DIV, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '=':
                 if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EQ, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EQ, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ASSIGN, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ASSIGN, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '!':
                 if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_NE, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_NE, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_NOT, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_NOT, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '<':
                 if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LE, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LE, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '<') {
                     if (src[idx + 2] == '=') {
-                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHL_ASSIGN, NULL, line, col, 3));
+                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHL_ASSIGN, NULL, line, col, 3, idx));
                         idx += 3;
                     } else {
-                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHL, NULL, line, col, 2));
+                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHL, NULL, line, col, 2, idx));
                         idx += 2;
                     }
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LT, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LT, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '>':
                 if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_GE, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_GE, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '>') {
                     if (src[idx + 2] == '=') {
-                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHR_ASSIGN, NULL, line, col, 3));
+                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHR_ASSIGN, NULL, line, col, 3, idx));
                         idx += 3;
                     } else {
-                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHR, NULL, line, col, 2));
+                        wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SHR, NULL, line, col, 2, idx));
                         idx += 2;
                     }
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_GT, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_GT, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '&':
                 if (src[idx + 1] == '&') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_AND, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_AND, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_AND_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_AND_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_AND, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_AND, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '|':
                 if (src[idx + 1] == '|') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_OR, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_OR, NULL, line, col, 2, idx));
                     idx += 2;
                 } else if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_OR_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_OR_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_OR, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_OR, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '^':
                 if (src[idx + 1] == '=') {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_XOR_ASSIGN, NULL, line, col, 2));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_XOR_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
                 } else {
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_XOR, NULL, line, col, 1));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_XOR, NULL, line, col, 1, idx));
                     idx++;
                 }
                 break;
             case '~':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_NOT, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_BIT_NOT, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case '(':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LPAREN, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LPAREN, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case ')':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RPAREN, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RPAREN, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case '[':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LBRACKET, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LBRACKET, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case ']':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RBRACKET, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RBRACKET, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case '{':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LBRACE, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_LBRACE, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case '}':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RBRACE, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_RBRACE, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case ',':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_COMMA, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_COMMA, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case ';':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SEMICOLON, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SEMICOLON, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case ':':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_COLON, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_COLON, NULL, line, col, 1, idx));
                 idx++;
                 break;
             case '?':
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_QUESTION, NULL, line, col, 1));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_QUESTION, NULL, line, col, 1, idx));
                 idx++;
                 break;
+            case '"': {
+                char* value = malloc(2);
+                size_t size = 2;
+                size_t i = 0;
+                size_t start = idx;
+                idx++;
+                while (src[idx] != '"' && src[idx] != 0) {
+                    if (src[idx] == '\\') {
+                        idx++;
+                        switch (src[idx]) {
+                            case 'n':
+                                value[i] = '\n';
+                                break;
+                            case 'r':
+                                value[i] = '\r';
+                                break;
+                            case 't':
+                                value[i] = '\t';
+                                break;
+                            case 'b':
+                                value[i] = '\b';
+                                break;
+                            case 'f':
+                                value[i] = '\f';
+                                break;
+                            case '"':
+                                value[i] = '"';
+                                break;
+                            case '\\':
+                                value[i] = '\\';
+                                break;
+                            default:
+                                value[i] = src[idx];
+                                break;
+                        }
+                    } else {
+                        value[i] = src[idx];
+                    }
+                    idx++;
+                    i++;
+                    if (i == size) {
+                        size *= 2;
+                        value = realloc(value, size);
+                    }
+                }
+                if (src[idx] != '"') {
+                    wccLexerError("Unterminated string", file, src, line, col, i, start);
+                }
+                idx++;
+                value[i] = 0;
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_STRING, value, line, col, i, start));
+                break;
+            }
             default: {
                 if ((src[idx] >= 'a' && src[idx] <= 'z') || (src[idx] >= 'A' && src[idx] <= 'Z') || src[idx] == '_') {
                     char* value = malloc(2);
@@ -220,7 +275,7 @@ wccTokenList* wccTokenize(char* src) {
                         idx++;
                     }
                     value[idx - start] = '\0';
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col, idx - start));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col, idx - start, idx));
                 } else if (src[idx] >= '0' && src[idx] <= '9') { // TODO: Handle binary, hex, and octal numbers
                     char* value = malloc(2);
                     size_t start = idx;
@@ -238,11 +293,12 @@ wccTokenList* wccTokenize(char* src) {
                         idx++;
                     }
                     value[idx - start] = '\0';
-                    wccTokenList_push(tokens, wccToken_new(isFloat ? WCC_TOKEN_FLOAT : WCC_TOKEN_INT, value, line, col, idx - start));
+                    wccTokenList_push(tokens, wccToken_new(isFloat ? WCC_TOKEN_FLOAT : WCC_TOKEN_INT, value, line, col, idx - start, idx));
                 }
             }
         }
+        col++;
     }
-    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EOF, NULL, line, col, 0));
+    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EOF, NULL, line, col, 0, idx));
     return tokens;
 }

@@ -4,8 +4,11 @@
  * See README.md for more info about the project
  * */
 
-#pragma once
-
+#include <stdio.h>
+#include "wcc/wcc.h"
+#include "lexer.h"
 #include "token.h"
 
-wccTokenList* wccTokenize(char* src, char* file);
+char* __compile_x64(char* src, char* filename) {
+    return __compile_x86(src, filename);
+}
