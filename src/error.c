@@ -30,11 +30,8 @@ void wccLexerError(char* msg, char* file, char* code, size_t line, size_t col, s
         fprintf(stderr, " ");
     }
     fprintf(stderr, len > 1 ? "├" : "│");
-    for (size_t i = 1; i < len - 1; i++) {
+    for (size_t i = 1; i < len; i++) {
         fprintf(stderr, "─");
-    }
-    if (len > 1) {
-        fprintf(stderr, "╯");
     }
     fprintf(stderr, "\n     | ");
     for (size_t i = 0; i < col; i++) {
@@ -50,7 +47,6 @@ void wccLexerError(char* msg, char* file, char* code, size_t line, size_t col, s
     for (size_t i = 1; i < strlen(msg) + 2; i++) {
         fprintf(stderr, "─");
     }
-    fprintf(stderr, ">\n");
     fprintf(stderr, "\n");
     exit(1);
 }
