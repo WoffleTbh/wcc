@@ -340,8 +340,7 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     }
                     value[idx - start] = '\0';
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col, idx - start, idx));
-                } else if (src[idx] == '0' && (src[idx + 1] == 'x' || src[idx + 1] == 'X' || src[idx + 1] == 'b' || src[idx + 1] == 'B' || src[idx + 1] == 'o' || src[idx + 1] == 'O')) {
-                    char type = src[idx + 1];
+                } else if (src[idx] == '0' && (src[idx + 1] == 'x' || src[idx + 1] == 'X')) {
                     idx += 2;
                     char* value = malloc(2);
                     size_t start = idx;
@@ -352,18 +351,11 @@ wccTokenList* wccTokenize(char* src, char* file) {
                             value = realloc(value, size);
                         }
                         if (src[idx] == '_') continue;
-                        if ((type == 'b' || type == 'B') && (src[idx] != '0' && src[idx] != '1')) {
-                            wccLexerError("Invalid binary literal", file, src, line, col, idx - start, start);
-                        } else if ((type == 'o' || type == 'O') && (src[idx] < '0' || src[idx] > '7')) {
-                            wccLexerError("Invalid octal literal", file, src, line, col, idx - start, start);
-                        } else if ((type == 'x' || type == 'X') && ((src[idx] < '0' || src[idx] > '9') && (src[idx] < 'a' || src[idx] > 'f') && (src[idx] < 'A' || src[idx] > 'F'))) {
-                            wccLexerError("Invalid hex literal", file, src, line, col, idx - start, start);
-                        }
                         value[idx - start] = src[idx];
                         idx++;
                     }
                     value[idx - start] = 0;
-                    wccTokenList_push(tokens, wccToken_new(type == 'b' || type == 'B' ? WCC_TOKEN_BIN : type == 'o' || type == 'O' ? WCC_TOKEN_OCT : WCC_TOKEN_HEX, value, line, col, idx - start, idx));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_HEX, value, line, col, idx - start, idx));
                 }
                 else if (src[idx] >= '0' && src[idx] <= '9') {
                     char* value = malloc(2);
