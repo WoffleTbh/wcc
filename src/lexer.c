@@ -79,6 +79,15 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     idx++;
                 }
                 break;
+            case '%':
+                if (src[idx + 1] == '=') {
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MOD_ASSIGN, NULL, line, col, 2, idx));
+                    idx += 2;
+                } else {
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_MOD, NULL, line, col, 1, idx));
+                    idx++;
+                }
+                break;
             case '=':
                 if (src[idx + 1] == '=') {
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EQ, NULL, line, col, 2, idx));
@@ -261,6 +270,61 @@ wccTokenList* wccTokenize(char* src, char* file) {
                 wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_STRING, value, line, col, i, start));
                 break;
             }
+            case '\'': {
+                char* value = malloc(2);
+                size_t size = 2;
+                size_t i = 0;
+                size_t start = idx;
+                idx++;
+                while (src[idx] != '\'' && src[idx] != 0) {
+                    if (src[idx] == '\\') {
+                        idx++;
+                        switch (src[idx]) {
+                            case 'n':
+                                value[i] = '\n';
+                                break;
+                            case 'r':
+                                value[i] = '\r';
+                                break;
+                            case 't':
+                                value[i] = '\t';
+                                break;
+                            case 'b':
+                                value[i] = '\b';
+                                break;
+                            case 'f':
+                                value[i] = '\f';
+                                break;
+                            case '\'':
+                                value[i] = '\'';
+                                break;
+                            case '\\':
+                                value[i] = '\\';
+                                break;
+                            default:
+                                value[i] = src[idx];
+                                break;
+                        }
+                    } else {
+                        value[i] = src[idx];
+                    }
+                    idx++;
+                    i++;
+                    if (i == size) {
+                        size *= 2;
+                        value = realloc(value, size);
+                    }
+                }
+                if (src[idx] != '\'') {
+                    wccLexerError("Unterminated character literal", file, src, line, col, i, start);
+                }
+                idx++;
+                value[i] = 0;
+                if (i != 1) {
+                    wccLexerError("Character literal must be a single character", file, src, line, col, i, start);
+                }
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_CHAR, value, line, col, i, start));
+            }
             default: {
                 if ((src[idx] >= 'a' && src[idx] <= 'z') || (src[idx] >= 'A' && src[idx] <= 'Z') || src[idx] == '_') {
                     char* value = malloc(2);
@@ -276,12 +340,37 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     }
                     value[idx - start] = '\0';
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col, idx - start, idx));
-                } else if (src[idx] >= '0' && src[idx] <= '9') { // TODO: Handle binary, hex, and octal numbers
+                } else if (src[idx] == '0' && (src[idx + 1] == 'x' || src[idx + 1] == 'X' || src[idx + 1] == 'b' || src[idx + 1] == 'B' || src[idx + 1] == 'o' || src[idx + 1] == 'O')) {
+                    char type = src[idx + 1];
+                    idx += 2;
+                    char* value = malloc(2);
+                    size_t start = idx;
+                    size_t size = 2;
+                    while ((src[idx] >= '0' && src[idx] <= '9') || (src[idx] >= 'a' && src[idx] <= 'f') || (src[idx] >= 'A' && src[idx] <= 'F') || src[idx] == '_') {
+                        if ((idx - start) == size) {
+                            size *= 2;
+                            value = realloc(value, size);
+                        }
+                        if (src[idx] == '_') continue;
+                        if ((type == 'b' || type == 'B') && (src[idx] != '0' && src[idx] != '1')) {
+                            wccLexerError("Invalid binary literal", file, src, line, col, idx - start, start);
+                        } else if ((type == 'o' || type == 'O') && (src[idx] < '0' || src[idx] > '7')) {
+                            wccLexerError("Invalid octal literal", file, src, line, col, idx - start, start);
+                        } else if ((type == 'x' || type == 'X') && ((src[idx] < '0' || src[idx] > '9') && (src[idx] < 'a' || src[idx] > 'f') && (src[idx] < 'A' || src[idx] > 'F'))) {
+                            wccLexerError("Invalid hex literal", file, src, line, col, idx - start, start);
+                        }
+                        value[idx - start] = src[idx];
+                        idx++;
+                    }
+                    value[idx - start] = 0;
+                    wccTokenList_push(tokens, wccToken_new(type == 'b' || type == 'B' ? WCC_TOKEN_BIN : type == 'o' || type == 'O' ? WCC_TOKEN_OCT : WCC_TOKEN_HEX, value, line, col, idx - start, idx));
+                }
+                else if (src[idx] >= '0' && src[idx] <= '9') {
                     char* value = malloc(2);
                     size_t start = idx;
                     size_t size = 2;
                     char isFloat = 0;
-                    while (src[idx] >= '0' && src[idx] <= '9') {
+                    while (src[idx] >= '0' && src[idx] <= '9' || src[idx] == '.' || src[idx] == '_') {
                         if ((idx - start) == size) {
                             size *= 2;
                             value = realloc(value, size);
@@ -289,11 +378,14 @@ wccTokenList* wccTokenize(char* src, char* file) {
                         if (src[idx] == '.') {
                             isFloat = 1;
                         }
+                        if (src[idx] == '_') continue;
                         value[idx - start] = src[idx];
                         idx++;
                     }
                     value[idx - start] = '\0';
                     wccTokenList_push(tokens, wccToken_new(isFloat ? WCC_TOKEN_FLOAT : WCC_TOKEN_INT, value, line, col, idx - start, idx));
+                } else {
+                    idx++;
                 }
             }
         }

@@ -172,6 +172,13 @@ char* wccTokenNameFromType(wccTokenType type) {
             return "question";
         case WCC_TOKEN_EOF:
             return "eof";
+        case WCC_TOKEN_BIN:
+            return "bin";
+        case WCC_TOKEN_OCT:
+            return "oct";
+        case WCC_TOKEN_HEX:
+            return "hex";
+
         default:
             return "unhandled";
     }
