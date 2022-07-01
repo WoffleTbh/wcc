@@ -73,7 +73,7 @@ class CompilationHelper:
 
     def link_files(self, directory):
         files = os.listdir(directory)
-        self.command(f"{self.cc} {' '.join(self.cflags)} -o {BIN_DIR}/{self.target}/wcc {' '.join(directory + '/' + file for file in files)}")
+        self.command(f"{self.cc} {' '.join(self.cflags)} -o {BIN_DIR}/{self.target}/wcc {' '.join(directory + '/' + file for file in files)} {' '.join(self.ldflags)}")
 
     def compile_dir(self, directory):
         for file in os.listdir(directory):

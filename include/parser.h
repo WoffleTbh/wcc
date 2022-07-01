@@ -190,13 +190,14 @@ typedef struct {
 /**********************************************/
 
 typedef struct {
-    wccToken* current_tok;
+    wccToken* tok;
+    wccTokenList* tokens;
     size_t idx;
     char* src;
     char* filename;
 } wccParserCtx;
 
-wccASTNode* wccParse(wccTokenList* tokens);
+wccASTNode* wccParse(char* src, char* filename, wccTokenList* tokens);
 
 wccConstNode* wccParseConst(wccParserCtx* ctx);
 wccControlFlowNode* wccParseControlFlow(wccParserCtx* ctx);
@@ -216,4 +217,6 @@ wccCompoundNode* wccParseCompound(wccParserCtx* ctx);
 
 wccASTNode* wccParseStatement(wccParserCtx* ctx);
 wccASTNode* wccParseExpression(wccParserCtx* ctx);
+
+wccASTNode* wccParseProgram(wccParserCtx* ctx);
 

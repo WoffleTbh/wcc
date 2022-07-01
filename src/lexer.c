@@ -5,6 +5,8 @@
  * */
 
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include "wcc/error.h"
 #include "token.h"
 #include "lexer.h"
@@ -13,6 +15,7 @@ wccTokenList* wccTokenize(char* src, char* file) {
     size_t idx = 0;
     size_t line = 1;
     size_t col = 1;
+    bool error = false;
     wccTokenList* tokens = wccTokenList_new();
     while (src[idx] != 0) {
         switch (src[idx]) {
@@ -223,7 +226,7 @@ wccTokenList* wccTokenize(char* src, char* file) {
                 size_t i = 0;
                 size_t start = idx;
                 idx++;
-                while (src[idx] != '"' && src[idx] != 0) {
+                while (src[idx] != '"' && src[idx] != '\n' && src[idx] != 0) {
                     if (src[idx] == '\\') {
                         idx++;
                         switch (src[idx]) {
@@ -255,6 +258,7 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     } else {
                         value[i] = src[idx];
                     }
+                    col++;
                     idx++;
                     i++;
                     if (i == size) {
@@ -263,11 +267,25 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     }
                 }
                 if (src[idx] != '"') {
-                    wccLexerError("Unterminated string", file, src, line, col, i, start);
+                    wccLexerError("Unterminated string", file, src, line, col - i, i + 1, start);
+                    char* corrected = malloc(i + 3);
+                    corrected[0] = '"';
+                    memcpy(corrected + 1, value, i);
+                    corrected[i + 1] = '"';
+                    corrected[i + 2] = 0;
+                    wccSuggestion("Append a \" to the end of the string constant", file, src, corrected, line, col - i, i + 1, i + 1, start);
+
+                    error = true;
+                }
+                if (src[idx] == '\n') {
+                    line++;
+                    col = 0;
+                } else {
+                    col += i;
                 }
                 idx++;
                 value[i] = 0;
-                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_STRING, value, line, col, i, start));
+                wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_STRING, value, line, col - i, i, start));
                 break;
             }
             case '\'': {
@@ -308,6 +326,7 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     } else {
                         value[i] = src[idx];
                     }
+                    col++;
                     idx++;
                     i++;
                     if (i == size) {
@@ -316,12 +335,27 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     }
                 }
                 if (src[idx] != '\'') {
-                    wccLexerError("Unterminated character literal", file, src, line, col, i, start);
+                    wccLexerError("Unterminated character literal", file, src, line, col - i, i, start);
+                    char* corrected = malloc(i + 2);
+                    corrected[0] = '\'';
+                    memcpy(corrected + 1, value, i);
+                    corrected[i] = '\'';
+                    corrected[i + 1] = 0;
+                    wccSuggestion("Append a ' to the end of the character literal", file, src, corrected, line, col - i, i, i, start);
+                    error = true;
                 }
                 idx++;
                 value[i] = 0;
                 if (i != 1) {
-                    wccLexerError("Character literal must be a single character", file, src, line, col, i, start);
+                    wccLexerError("Character literal must be a single character", file, src, line, col - i, i, start);
+                    char* corrected = malloc(i + 2);
+                    corrected[0] = '"';
+                    memcpy(corrected + 1, value, i);
+                    corrected[i] = '"';
+                    corrected[i + 1] = 0;
+                    wccSuggestion("Consider replacing the ' with a \" to make it a string constant", file, src, corrected, line, col - i, i, i, start);
+
+                    error = true;
                 }
                 wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_CHAR, value, line, col, i, start));
             }
@@ -337,9 +371,10 @@ wccTokenList* wccTokenize(char* src, char* file) {
                         }
                         value[idx - start] = src[idx];
                         idx++;
+                        col++;
                     }
                     value[idx - start] = '\0';
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col, idx - start, idx));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col - (idx - start), idx - start, idx));
                 } else if (src[idx] == '0' && (src[idx + 1] == 'x' || src[idx + 1] == 'X')) {
                     idx += 2;
                     char* value = malloc(2);
@@ -353,28 +388,52 @@ wccTokenList* wccTokenize(char* src, char* file) {
                         if (src[idx] == '_') continue;
                         value[idx - start] = src[idx];
                         idx++;
+                        col++;
                     }
                     value[idx - start] = 0;
-                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_HEX, value, line, col, idx - start, idx));
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_HEX, value, line, col - (idx - start), idx - start, idx));
                 }
                 else if (src[idx] >= '0' && src[idx] <= '9') {
                     char* value = malloc(2);
                     size_t start = idx;
                     size_t size = 2;
                     char isFloat = 0;
-                    while (src[idx] >= '0' && src[idx] <= '9' || src[idx] == '.' || src[idx] == '_') {
+                    while ((src[idx] >= '0' && src[idx] <= '9') || src[idx] == '.' || src[idx] == '_') {
                         if ((idx - start) == size) {
                             size *= 2;
                             value = realloc(value, size);
                         }
                         if (src[idx] == '.') {
-                            isFloat = 1;
+                            isFloat++;
                         }
                         if (src[idx] == '_') continue;
                         value[idx - start] = src[idx];
                         idx++;
+                        col++;
                     }
                     value[idx - start] = '\0';
+                    if (isFloat > 1) {
+                        wccLexerError("Malformed number", file, src, line, col - (idx - start) - 2, idx - start - 1, start);
+                        char* corrected = malloc(idx - start + 2);
+                        size_t dots = 0;
+                        size_t i = 0;
+                        size_t j = 0;
+                        while (i < idx - start) {
+                            if (src[i + start] == '.') {
+                                dots++;
+                                if (dots == 1) {
+                                    corrected[j] = '.';
+                                } else {j--;}
+                            } else {
+                                corrected[j] = src[i + start];
+                            }
+                            i++;
+                            j++;
+                        }
+                        corrected[idx - start - dots + 1] = 0;
+                        wccSuggestion("Consider removing the extra dot(s)", file, src, corrected, line, col - (idx - start) - 2, idx - start - dots, idx - start, start);
+                        error = true;
+                    }
                     wccTokenList_push(tokens, wccToken_new(isFloat ? WCC_TOKEN_FLOAT : WCC_TOKEN_INT, value, line, col, idx - start, idx));
                 } else {
                     idx++;
@@ -384,5 +443,9 @@ wccTokenList* wccTokenize(char* src, char* file) {
         col++;
     }
     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_EOF, NULL, line, col, 0, idx));
+    if (error) {
+        wccTokenList_free(tokens);
+        exit(1);
+    }
     return tokens;
 }
