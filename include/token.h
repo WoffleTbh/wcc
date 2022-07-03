@@ -10,7 +10,7 @@
 
 #define WCC_TOKEN_LIST_INITIAL_CAPACITY 32
 
-typedef enum {
+typedef enum { // Token types, order matters
     /* Arithmetic */
     WCC_TOKEN_ADD,
     WCC_TOKEN_SUB,
@@ -80,6 +80,7 @@ typedef enum {
     WCC_TOKEN_SEMICOLON,
     WCC_TOKEN_COLON,
     WCC_TOKEN_DOT,
+    WCC_TOKEN_ARROW,
 
     /* Misc */
     WCC_TOKEN_QUESTION,

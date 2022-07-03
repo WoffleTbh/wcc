@@ -13,18 +13,23 @@
 typedef enum {
     WCC_NODE_FLOAT,
     WCC_NODE_INT,
-    WCC_NODE_STRING,
+    WCC_NODE_STRING, /* TODO: Have casting done during parsing or somethign idk */
     WCC_NODE_CHAR,
 
     WCC_NODE_BINOP,
     WCC_NODE_UNOP,
+    WCC_NODE_CAST,
 
     WCC_NODE_VARACCESS,
     WCC_NODE_FUNCCALL, /* Both a statement and expression */
+    WCC_NODE_MEMBERACCESS,
+    WCC_NODE_ARRAYACCESS,
+    WCC_NODE_PTRACCESS,
 
     WCC_NODE_FOR,
     WCC_NODE_WHILE,
     WCC_NODE_IF,
+    WCC_NODE_TERENARY,
     WCC_NODE_RETURN,
     WCC_NODE_CONTINUE,
     WCC_NODE_BREAK,
@@ -37,12 +42,42 @@ typedef enum {
     WCC_NODE_FUNCDECL,
 
     WCC_NODE_COMPOUND,
+    WCC_NODE_LIST, // eg. 1, 2, 3
 } wccNodeType;
+
+typedef enum {
+    WCC_TYPE_VOID,
+    WCC_TYPE_CHAR,
+    WCC_TYPE_INT,
+    WCC_TYPE_FLOAT,
+    WCC_TYPE_STRING,
+    WCC_TYPE_STRUCT,
+    WCC_TYPE_ENUM,
+    WCC_TYPE_TYPEDEF,
+    WCC_TYPE_AUTO,
+    WCC_TYPE_UNKNOWN, // For typedef'd types, this'll be resolved in the compiler
+} wccTypePrimary;
+
+typedef enum {
+    WCC_TYPE_IS_INLINE =   1 << 0,
+    WCC_TYPE_IS_STATIC =   1 << 1,
+    WCC_TYPE_IS_EXTERN =   1 << 2,
+    WCC_TYPE_IS_CONST =    1 << 3,
+    WCC_TYPE_IS_VOLATILE = 1 << 4,
+    WCC_TYPE_IS_REGISTER = 1 << 5,
+    WCC_TYPE_IS_RESTRICT = 1 << 6,
+} wccTypeQualifier;
 
 typedef struct {
     wccNodeType type;
     void* node;
 } wccASTNode;
+
+typedef struct {
+    wccTypePrimary type;
+    unsigned char ptr_depth;
+    char attrib; // inline, static, const, volatile, etc.
+} wccType;
 
 typedef struct {
     wccToken* value;
@@ -61,8 +96,8 @@ typedef struct {
 
 typedef struct {
     wccToken* op;
-    wccASTNode* left;
-    wccASTNode* right;
+    wccASTNode* lhs;
+    wccASTNode* rhs;
     size_t line;
     size_t column;
     size_t length;
@@ -77,6 +112,15 @@ typedef struct {
     size_t length;
     size_t idx;
 } wccUnOpNode; /* NOT, INC, DEC, DEREF */
+
+typedef struct {
+    wccType* type;
+    wccASTNode* expr;
+    size_t line;
+    size_t column;
+    size_t length;
+    size_t idx;
+} wccCastNode; /* CAST */
 
 typedef struct {
     wccASTNode* initializer;
@@ -140,9 +184,17 @@ typedef struct {
 } wccVarDeclNode;
 
 typedef struct {
-    wccToken* name;
-    wccASTNode** args;
-    size_t args_count;
+    wccASTNode** nodes;
+    size_t count;
+    size_t idx;
+    size_t line;
+    size_t column;
+    size_t length;
+} wccListNode;
+
+typedef struct {
+    wccASTNode* func;
+    wccListNode* args;
     size_t line;
     size_t column;
     size_t length;
@@ -187,6 +239,25 @@ typedef struct {
     size_t idx;
 } wccCompoundNode;
 
+typedef struct {
+    wccASTNode* condition;
+    wccASTNode* exprTrue;
+    wccASTNode* exprFalse;
+    size_t line;
+    size_t column;
+    size_t length;
+    size_t idx;
+} wccTernaryNode;
+
+typedef struct {
+    wccASTNode* left;
+    wccASTNode* right;
+    size_t line;
+    size_t column;
+    size_t length;
+    size_t idx;
+} wccMemberAccessNode;
+
 /**********************************************/
 
 typedef struct {
@@ -199,24 +270,27 @@ typedef struct {
 
 wccASTNode* wccParse(char* src, char* filename, wccTokenList* tokens);
 
-wccConstNode* wccParseConst(wccParserCtx* ctx);
-wccControlFlowNode* wccParseControlFlow(wccParserCtx* ctx);
-wccBinOpNode* wccParseBinOp(wccParserCtx* ctx);
-wccUnOpNode* wccParseUnOp(wccParserCtx* ctx);
-wccForNode* wccParseFor(wccParserCtx* ctx);
-wccWhileNode* wccParseWhile(wccParserCtx* ctx);
-wccIfNode* wccParseIf(wccParserCtx* ctx);
-wccReturnNode* wccParseReturn(wccParserCtx* ctx);
-wccFuncDeclNode* wccParseFuncDecl(wccParserCtx* ctx);
-wccVarDeclNode* wccParseVarDecl(wccParserCtx* ctx);
-wccFuncCallNode* wccParseFuncCall(wccParserCtx* ctx);
-wccStructNode* wccParseStruct(wccParserCtx* ctx);
-wccEnumNode* wccParseEnum(wccParserCtx* ctx);
-wccTypedefNode* wccParseTypedef(wccParserCtx* ctx);
-wccCompoundNode* wccParseCompound(wccParserCtx* ctx);
-
 wccASTNode* wccParseStatement(wccParserCtx* ctx);
 wccASTNode* wccParseExpression(wccParserCtx* ctx);
 
+/* TODO: Gove these shits a name lmao */
+wccASTNode* wccParsePrecedence1(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence2(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence3(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence4(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence5(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence6(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence7(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence8(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence9(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence10(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence11(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence12(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence13(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence14(wccParserCtx* ctx);
+wccASTNode* wccParsePrecedence15(wccParserCtx* ctx);
+wccASTNode* wccParsePrimary(wccParserCtx* ctx);
+
 wccASTNode* wccParseProgram(wccParserCtx* ctx);
 
+void wccPrintAST(wccASTNode* node, int indent);

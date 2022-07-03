@@ -48,6 +48,9 @@ wccTokenList* wccTokenize(char* src, char* file) {
                 } else if (src[idx + 1] == '=') {
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB_ASSIGN, NULL, line, col, 2, idx));
                     idx += 2;
+                } else if (src[idx + 1] == '>') {
+                    wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_ARROW, NULL, line, col, 2, idx));
+                    idx += 2;
                 } else {
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_SUB, NULL, line, col, 1, idx));
                     idx++;
