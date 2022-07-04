@@ -17,7 +17,7 @@ BIN_DIR = "bin"
 
 class CompilationHelper:
     def __init__(self):
-        self.ldflags = []
+        self.ldflags = ["-lm"]
         self.cflags = ["-std=c99", f"-I{INCLUDE_DIR}"]
 
         self.cc = "clang"

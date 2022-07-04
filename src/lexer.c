@@ -368,13 +368,13 @@ wccTokenList* wccTokenize(char* src, char* file) {
                     size_t start = idx;
                     size_t size = 2;
                     while ((src[idx] >= 'a' && src[idx] <= 'z') || (src[idx] >= 'A' && src[idx] <= 'Z') || (src[idx] >= '0' && src[idx] <= '9') || src[idx] == '_') {
+                        value[idx - start] = src[idx];
+                        idx++;
+                        col++;
                         if ((idx - start) == size) {
                             size *= 2;
                             value = realloc(value, size);
                         }
-                        value[idx - start] = src[idx];
-                        idx++;
-                        col++;
                     }
                     value[idx - start] = '\0';
                     wccTokenList_push(tokens, wccToken_new(WCC_TOKEN_IDENTIFIER, value, line, col - (idx - start), idx - start, idx));

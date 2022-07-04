@@ -21,7 +21,7 @@ typedef enum {
     WCC_NODE_CAST,
 
     WCC_NODE_VARACCESS,
-    WCC_NODE_FUNCCALL, /* Both a statement and expression */
+    WCC_NODE_FUNCCALL,
     WCC_NODE_MEMBERACCESS,
     WCC_NODE_ARRAYACCESS,
     WCC_NODE_PTRACCESS,
@@ -146,7 +146,8 @@ typedef struct {
     size_t cases;
     wccASTNode** condition;
     wccASTNode** body;
-    wccASTNode* elseBody;
+    wccASTNode* else_body;
+    bool has_else;
     size_t line;
     size_t column;
     size_t length;
@@ -258,6 +259,15 @@ typedef struct {
     size_t idx;
 } wccMemberAccessNode;
 
+typedef struct {
+    wccASTNode* arr;
+    wccASTNode* index;
+    size_t line;
+    size_t column;
+    size_t length;
+    size_t idx;
+} wccArrayAccessNode;
+
 /**********************************************/
 
 typedef struct {
@@ -266,6 +276,8 @@ typedef struct {
     size_t idx;
     char* src;
     char* filename;
+    // Saved idx
+    size_t saved_idx;
 } wccParserCtx;
 
 wccASTNode* wccParse(char* src, char* filename, wccTokenList* tokens);
